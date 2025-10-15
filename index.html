@@ -298,11 +298,33 @@ function showThanks(){
 }
 
 renderCalendar();
+// 🧩 Apps Script 웹앱 URL과 SECRET 토큰 넣기
+const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyaZNYZoYECVdShkKqhNmcrjW6gAuiDjcckNDkSDrhlIE7l5sxkmgoEYkOPGvp05VndTw/exec';
+const SECRET = 'aicoach_interview_minipoc_10'; // Apps Script 코드의 SECRET과 동일
 
-document.getElementById('submit').addEventListener('click', ()=>{
+document.getElementById('submit').addEventListener('click', async ()=>{
   if(!validate()) return;
-  showThanks();
+
+  const data = payload();
+  data.secret = SECRET; // 비공개 토큰도 함께 전송
+
+  try {
+    const res = await fetch(WEBHOOK_URL + '?token=' + encodeURIComponent(SECRET), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Secret': SECRET },
+      body: JSON.stringify(data)
+    });
+    const json = await res.json().catch(()=>({}));
+    if (res.ok && json.ok) {
+      showThanks(); // 성공 시 “감사합니다” 화면
+    } else {
+      alert('제출에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    }
+  } catch (e) {
+    alert('네트워크 오류로 제출에 실패했습니다.');
+  }
 });
+
 </script>
 </body>
 </html>
