@@ -11,7 +11,27 @@
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,Apple Color Emoji,Segoe UI Emoji}
     header{position:sticky;top:0;background:linear-gradient(180deg,#ffffff,rgba(255,255,255,.92));backdrop-filter:saturate(120%) blur(6px);border-bottom:1px solid var(--line);z-index:10}
-    .wrap{max-width:1080px;margin:0 auto;padding:24px}
+/* 전체 레이아웃 폭 확장 */
+.wrap{
+  max-width:1400px; /* 1080 → 1400으로 확장 */
+  margin:0 auto;
+  padding:24px;
+}
+
+/* 5열 그리드 여유 있게, 자식 카드 폭 통일 */
+.cal-grid{
+  display:grid;
+  grid-template-columns:repeat(5, 1fr);
+  gap:16px;      /* 12 → 16 (옵션) */
+  width:100%;
+}
+
+/* 선택 가능/불가 카드 모두 동일 폭 보장 */
+.cal-grid > .date-card{
+  width:100%;
+}
+
+
     h1{font-size:22px;margin:0 0 6px}
     p{margin:0 0 10px;color:var(--muted)}
     .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
