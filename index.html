@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI코치 사용자 인터뷰 – 일정 선택</title>
+  <style>
+    :root{
+      --bg:#f7f9fb; --card:#ffffff; --text:#0f172a; --muted:#475569; --brand:#0ea5e9; --line:#e2e8f0; --ok:#22c55e;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,Apple Color Emoji,Segoe UI Emoji}
+    header{position:sticky;top:0;background:linear-gradient(180deg,#ffffff,rgba(255,255,255,.92));backdrop-filter:saturate(120%) blur(6px);border-bottom:1px solid var(--line);z-index:10}
+    .wrap{max-width:1080px;margin:0 auto;padding:24px}
+    h1{font-size:22px;margin:0 0 6px}
+    p{margin:0 0 10px;color:var(--muted)}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+    .grid{display:grid;gap:16px}
+    .grid.cols-2{grid-template-columns:1.2fr 2fr}
+    .dates{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    @media (max-width:900px){.grid.cols-2{grid-template-columns:1fr}.dates{grid-template-columns:1fr}}
+
+    .date-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:10px}
+    .date-title{display:flex;align-items:center;justify-content:space-between}
+    .date-title h3{font-size:16px;margin:0}
+    .badge{font-size:12px;color:#fff;background:var(--brand);padding:3px 8px;border-radius:999px}
+    .times{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+    .time{display:flex;align-items:center;gap:8px;font-size:14px;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:#fafcff}
+    .row{display:flex;gap:12px;align-items:center}
+    input[type="text"],input[type="tel"],input[type="email"]{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:14px}
+    label{font-size:14px;color:var(--muted)}
+    .actions{display:flex;flex-wrap:wrap;gap:8px}
+    button{appearance:none;border:1px solid var(--line);background:#fff;padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600}
+    button.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+    button.ghost{background:transparent}
+    .footer{color:var(--muted);font-size:12px;text-align:center;margin-top:8px}
+    .success{color:var(--ok);font-weight:700}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>AI코치 사용자 인터뷰 – 일정 선택</h1>
+      <p>대상 기간: <b>10/21(화) ~ 11/5(수)</b> · 평일 <b>09:00–17:00</b> (점심 12–13 제외) · <b>10/24, 10/31 제외</b></p>
+    </div>
+  </header>
+
+  <main class="wrap grid cols-2" id="app">
+    <section class="card" aria-labelledby="infoTitle">
+      <h2 id="infoTitle" style="margin:0 0 12px">기본 정보</h2>
+      <div class="row"><label style="width:100%">참여 의사
+        <select id="consent" style="width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff">
+          <option value="">선택해주세요</option>
+          <option value="yes">네, 참여하고 싶습니다</option>
+          <option value="no">아니요, 이번에는 어렵습니다</option>
+        </select></label></div>
+      <div class="row"><label style="flex:1">이름
+        <input type="text" id="name" placeholder="홍길동"/></label></div>
+      <div class="row"><label style="flex:1">연락처 (휴대폰)
+        <input type="tel" id="phone" placeholder="010-1234-5678"/></label></div>
+      <div class="actions" style="margin-top:8px">
+        <button class="primary" id="exportCsv">CSV 저장</button>
+        <button id="copyJson">JSON 복사</button>
+        <button class="ghost" id="print">인쇄/저장(PDF)</button>
+        <span id="toast" style="margin-left:6px"></span>
+      </div>
+      <p class="footer">※ 이 페이지는 정적(클라이언트)만으로 동작하며, 선택한 내용은 서버로 전송되지 않습니다. 내보낸 CSV/JSON을 메일/슬랙/구글시트로 공유해주세요.</p>
+    </section>
+
+    <section class="card" aria-labelledby="calendarTitle">
+      <h2 id="calendarTitle" style="margin:0 0 12px">가능한 날짜/시간을 체크해주세요</h2>
+      <div id="dates" class="dates"></div>
+    </section>
+  </main>
+
+<script>
+// ====== 설정값 ======
+// 한국어 요일
+const WEEKDAYS = ["일","월","화","수","목","금","토"];
+// 대상 기간과 제외일(월/일)
+const INCLUDE_RANGE = { start: "2025-10-21", end: "2025-11-05" };
+const EXCLUDE_MMDD = new Set(["10-24","10-31"]);
+// 평일만 허용
+const WEEKEND_BLOCK = true;
+// 시간 슬롯 (점심 12-13 제외)
+const TIME_SLOTS = [
+  [9,10],[10,11],[11,12],[13,14],[14,15],[15,16],[16,17]
+];
+
+// ====== 유틸 ======
+const fmt2 = n => n.toString().padStart(2,"0");
+function toLocalYMD(date){
+  const y = date.getFullYear();
+  const m = fmt2(date.getMonth()+1);
+  const d = fmt2(date.getDate());
+  return `${y}-${m}-${d}`;
+}
+function mmdd(date){
+  return `${fmt2(date.getMonth()+1)}-${fmt2(date.getDate())}`;
+}
+function makeDateList(){
+  const out=[];
+  const start = new Date(INCLUDE_RANGE.start+"T00:00:00");
+  const end   = new Date(INCLUDE_RANGE.end+"T00:00:00");
+  for(let dt=new Date(start); dt<=end; dt.setDate(dt.getDate()+1)){
+    const isWeekend = dt.getDay()===0 || dt.getDay()===6;
+    if(WEEKEND_BLOCK && isWeekend) continue;
+    if(EXCLUDE_MMDD.has(mmdd(dt))) continue;
+    out.push(new Date(dt));
+  }
+  return out;
+}
+
+// ====== 렌더 ======
+const selected = {}; // { 'YYYY-MM-DD': Set(["09:00-10:00",...]) }
+function render(){
+  const dates = makeDateList();
+  const $dates = document.getElementById('dates');
+  $dates.innerHTML = '';
+  dates.forEach(date=>{
+    const ymd = toLocalYMD(date);
+    const w = WEEKDAYS[date.getDay()];
+    const title = `${fmt2(date.getMonth()+1)}/${fmt2(date.getDate())}(${w})`;
+    const card = document.createElement('div');
+    card.className='date-card';
+
+    const head = document.createElement('div');
+    head.className='date-title';
+    head.innerHTML = `<h3>${title}</h3><span class="badge">선택</span>`;
+    card.appendChild(head);
+
+    const times = document.createElement('div');
+    times.className='times';
+
+    // 시간 슬롯 체크박스들
+    TIME_SLOTS.forEach(([h1,h2])=>{
+      const label = `${fmt2(h1)}:00-${fmt2(h2)}:00`;
+      const id = `${ymd}_${label}`;
+      const wrap = document.createElement('label');
+      wrap.className='time';
+      wrap.innerHTML = `<input type="checkbox" data-ymd="${ymd}" value="${label}" id="${id}"><span>${label}</span>`;
+      times.appendChild(wrap);
+    });
+
+    // 시간 상관 없음
+    const any = document.createElement('label');
+    any.className='time';
+    any.innerHTML = `<input type="checkbox" data-ymd="${ymd}" value="시간 상관 없음" id="${ymd}_any"><span>시간 상관 없음</span>`;
+    times.appendChild(any);
+
+    card.appendChild(times);
+    $dates.appendChild(card);
+  });
+
+  // 이벤트 위임
+  $dates.addEventListener('change', (e)=>{
+    const t = e.target;
+    if(t && t.matches('input[type="checkbox"][data-ymd]')){
+      const day = t.getAttribute('data-ymd');
+      const val = t.value;
+      selected[day] ??= new Set();
+      if(t.checked){
+        if(val === '시간 상관 없음'){
+          // 해당 날짜의 다른 선택 모두 해제
+          selected[day] = new Set(['시간 상관 없음']);
+          document.querySelectorAll(`input[data-ymd="${day}"]`).forEach(inp=>{
+            inp.checked = (inp.value === '시간 상관 없음');
+          });
+        }else{
+          selected[day].add(val);
+          // 시간이 하나라도 선택되면 '시간 상관 없음' 해제
+          const any = document.getElementById(`${day}_any`);
+          if(any){ any.checked = false; selected[day].delete('시간 상관 없음'); }
+        }
+      }else{
+        selected[day].delete(val);
+      }
+      // 빈 세트 정리
+      if(selected[day] && selected[day].size===0) delete selected[day];
+    }
+  }, { once: true });
+}
+
+// ====== 내보내기 ======
+function getPayload(){
+  const name = document.getElementById('name').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const consent = document.getElementById('consent').value;
+  const items = Object.keys(selected).sort().map(day=>({ date: day, slots: Array.from(selected[day]).sort() }));
+  return { consent, name, phone, selections: items };
+}
+
+function toCSV(payload){
+  const rows = [["consent","name","phone","date","slots"]];
+  if(payload.selections.length===0){ rows.push([payload.consent,payload.name,payload.phone,'','']); }
+  payload.selections.forEach(it=>{
+    rows.push([payload.consent,payload.name,payload.phone,it.date,it.slots.join(' | ')]);
+  });
+  return rows.map(r=>r.map(v=>`"${(v??'').toString().replaceAll('"','""')}"`).join(',')).join('\n');
+}
+
+function download(filename, text){
+  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function toast(msg, ok=false){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = ok? 'success':'';
+  setTimeout(()=>{ el.textContent=''; el.className=''; }, 2200);
+}
+
+// 초기화 & 핸들러
+render();
+
+document.getElementById('exportCsv').addEventListener('click',()=>{
+  const payload = getPayload();
+  if(payload.consent!=="yes"){ toast('참여 의사를 "네"로 선택해주세요.'); return; }
+  if(!payload.name || !payload.phone){ toast('이름과 연락처를 입력해주세요.'); return; }
+  const csv = toCSV(payload);
+  download(`interview_slots_${payload.name}.csv`, csv);
+  toast('CSV가 저장되었습니다.', true);
+});
+
+document.getElementById('copyJson').addEventListener('click',async()=>{
+  const payload = getPayload();
+  try{ await navigator.clipboard.writeText(JSON.stringify(payload, null, 2)); toast('JSON을 복사했습니다.', true);}catch(e){ toast('복사에 실패했습니다.'); }
+});
+
+document.getElementById('print').addEventListener('click',()=>window.print());
+</script>
+</body>
+</html>
