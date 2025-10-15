@@ -306,24 +306,30 @@ document.getElementById('submit').addEventListener('click', async ()=>{
   if(!validate()) return;
 
   const data = payload();
-  data.secret = SECRET; // 비공개 토큰도 함께 전송
+  data.secret = SECRET; // 비공개 토큰(본문에도 포함)
 
   try {
     const res = await fetch(WEBHOOK_URL + '?token=' + encodeURIComponent(SECRET), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Secret': SECRET },
+      // CORS 사전요청 막기: 커스텀 헤더 제거, Content-Type을 text/plain으로
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(data)
     });
-    const json = await res.json().catch(()=>({}));
-    if (res.ok && json.ok) {
-      showThanks(); // 성공 시 “감사합니다” 화면
+
+    // 실패 원인 디버깅을 위해 상세 메시지 표시
+    const text = await res.text();
+    let ok = false;
+    try { ok = (JSON.parse(text).ok === true); } catch(_) {}
+    if (res.ok && ok) {
+      showThanks();
     } else {
-      alert('제출에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      alert('제출 실패: ' + text);
     }
   } catch (e) {
-    alert('네트워크 오류로 제출에 실패했습니다.');
+    alert('네트워크 오류: ' + (e?.message || e));
   }
 });
+
 
 </script>
 </body>
