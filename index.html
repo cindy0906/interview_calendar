@@ -261,12 +261,35 @@ function payload(){
 }
 
 function validate(){
-  const p = payload();
-  if(p.consent !== 'yes'){ alert('참여 의사를 "네"로 선택해주세요.'); return false; }
-  if(!p.name || !p.phone){ alert('이름과 연락처를 입력해주세요.'); return false; }
-  if(p.selections.length === 0){ alert('가능한 날짜/시간을 최소 1개 이상 선택해주세요.'); return false; }
+  const consentEl = document.getElementById('consent');
+  const nameEl    = document.getElementById('name');
+  const phoneEl   = document.getElementById('phone');
+
+  const consent = (consentEl?.value || '').trim();   // "yes" | "no"
+  const name    = (nameEl?.value || '').trim();
+  const phone   = (phoneEl?.value || '').trim();
+  const p       = payload(); // { consent, name, phone, selections: [...] }
+
+  // 1️⃣ 참여의사/이름/연락처는 항상 필수
+  if(!consent){
+    alert('참여 의사를 선택해주세요.');
+    return false;
+  }
+  if(!name || !phone){
+    alert('이름과 연락처를 입력해주세요.');
+    return false;
+  }
+
+  // 2️⃣ 참여의사가 "네"인 경우에만 시간 선택 1개 이상 필수
+  if(consent === 'yes' && (!p.selections || p.selections.length === 0)){
+    alert('가능한 날짜/시간을 최소 1개 이상 선택해주세요.');
+    return false;
+  }
+
+  // 3️⃣ 참여의사가 "아니요"면 시간 선택 없어도 통과
   return true;
 }
+
 
 function showThanks(){
   // 본문을 간단한 감사 문구로 교체
