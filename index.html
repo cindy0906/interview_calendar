@@ -41,19 +41,21 @@
     padding:24px;
   }
 
-  /* 캘린더 5열(월~금) */
+  /* 캘린더 */
   .calendar { margin-top:16px; }
 
-  .cal-grid {
-    display:grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap:16px;
+  /* >>> flex 기반 캘린더 레이아웃 (최대 5카드/행) <<< */
+  .cal-grid{
+    --cal-gap:16px;                /* 카드 간격 변수 */
+    display:flex;
+    flex-wrap:wrap;
+    gap:var(--cal-gap);
     width:100%;
   }
-
-  /* 선택 가능/불가 카드 동일 폭 보장 */
-  .cal-grid > .date-card {
-    width:100%;
+  /* 한 행 최대 5개: (100% - 4*gap) / 5 */
+  .cal-grid .date-card{
+    flex:1 1 calc((100% - (4 * var(--cal-gap))) / 5);
+    max-width:calc((100% - (4 * var(--cal-gap))) / 5);
   }
 
   h1 { font-size:22px; margin:0 0 6px; }
@@ -200,29 +202,25 @@
 
   /* --- 반응형: 태블릿(<=1024px)에서는 2열 --- */
   @media (max-width: 1024px) {
-    .cal-grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap:14px;
+    /* (100% - 1*gap) / 2 */
+    .cal-grid .date-card{
+      flex:1 1 calc((100% - var(--cal-gap)) / 2);
+      max-width:calc((100% - var(--cal-gap)) / 2);
     }
-    .times {
-      grid-template-columns: 1fr;
-    }
+    .times { grid-template-columns: 1fr; }
   }
 
   /* --- 반응형: 모바일(<=640px)에서는 1열 --- */
   @media (max-width: 640px) {
-    .cal-grid {
-      grid-template-columns: 1fr;
-      gap:12px;
+    .cal-grid .date-card{
+      flex:1 1 100%;
+      max-width:100%;
     }
-    .date-card {
-      min-height:auto;
-    }
-    .times {
-      grid-template-columns: 1fr;
-    }
+    .date-card { min-height:auto; }
+    .times { grid-template-columns: 1fr; }
   }
 </style>
+
 
 </head>
 <body>
