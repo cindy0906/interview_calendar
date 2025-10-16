@@ -26,6 +26,32 @@
   width:100%;
 }
 
+/* --- 반응형: 태블릿(<=1024px)에서는 2열 --- */
+@media (max-width: 1024px){
+  .cal-grid{
+    grid-template-columns: repeat(2, 1fr);  /* 5열 → 2열 */
+    gap:14px;
+  }
+  .times{
+    grid-template-columns: 1fr; /* 시간 옵션은 한 줄씩 */
+  }
+}
+
+/* --- 반응형: 모바일(<=640px)에서는 1열 --- */
+@media (max-width: 640px){
+  .cal-grid{
+    grid-template-columns: 1fr;  /* 2열 → 1열 */
+    gap:12px;
+  }
+  .date-card{
+    min-height: auto; /* 높이 강제값 완화로 스크롤 부담 줄임 */
+  }
+  .times{
+    grid-template-columns: 1fr;  /* 시간 옵션 한 줄씩 */
+  }
+}
+
+
 /* 선택 가능/불가 카드 모두 동일 폭 보장 */
 .cal-grid > .date-card{
   width:100%;
