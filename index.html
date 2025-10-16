@@ -5,91 +5,225 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AI코치 사용자 인터뷰 – 일정 선택</title>
   <style>
-    :root{
-      --bg:#f7f9fb; --card:#ffffff; --text:#0f172a; --muted:#475569; --brand:#0ea5e9; --line:#e2e8f0; --ok:#22c55e; --warn:#ef4444;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,Apple Color Emoji,Segoe UI Emoji}
-    header{position:sticky;top:0;background:linear-gradient(180deg,#ffffff,rgba(255,255,255,.92));backdrop-filter:saturate(120%) blur(6px);border-bottom:1px solid var(--line);z-index:10}
-/* 전체 레이아웃 폭 확장 */
-.wrap{
-  max-width:1400px; /* 1080 → 1400으로 확장 */
-  margin:0 auto;
-  padding:24px;
-}
-
-/* 화면 폭에 맞춰 자동으로 열 수를 줄이는 그리드 */
-.cal-grid{
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap:16px;
-  width:100%;
-}
-
-
-/* --- 반응형: 태블릿(<=1024px)에서는 2열 --- */
-@media (max-width: 1024px){
-  .cal-grid{
-    grid-template-columns: repeat(2, 1fr);  /* 5열 → 2열 */
-    gap:14px;
+  :root {
+    --bg:#f7f9fb; 
+    --card:#ffffff; 
+    --text:#0f172a; 
+    --muted:#475569; 
+    --brand:#0ea5e9; 
+    --line:#e2e8f0; 
+    --ok:#22c55e; 
+    --warn:#ef4444;
   }
-  .times{
-    grid-template-columns: 1fr; /* 시간 옵션은 한 줄씩 */
-  }
-}
 
-/* --- 반응형: 모바일(<=640px)에서는 1열 --- */
-@media (max-width: 640px){
-  .cal-grid{
-    grid-template-columns: 1fr;  /* 2열 → 1열 */
+  * { box-sizing:border-box; }
+
+  body {
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,Apple Color Emoji,Segoe UI Emoji;
+  }
+
+  header {
+    position:sticky;
+    top:0;
+    background:linear-gradient(180deg,#ffffff,rgba(255,255,255,.92));
+    backdrop-filter:saturate(120%) blur(6px);
+    border-bottom:1px solid var(--line);
+    z-index:10;
+  }
+
+  /* 전체 레이아웃 폭 확장 */
+  .wrap {
+    max-width:1400px; /* 1080 → 1400으로 확장 */
+    margin:0 auto;
+    padding:24px;
+  }
+
+  /* 캘린더 5열(월~금) */
+  .calendar { margin-top:16px; }
+
+  .cal-grid {
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap:16px;
+    width:100%;
+  }
+
+  /* 선택 가능/불가 카드 동일 폭 보장 */
+  .cal-grid > .date-card {
+    width:100%;
+  }
+
+  h1 { font-size:22px; margin:0 0 6px; }
+  p { margin:0 0 10px; color:var(--muted); }
+
+  .card {
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:16px;
+  }
+
+  /* 상단 기본정보 섹션 – 가로 한 덩이 */
+  .info-row {
+    display:flex;
     gap:12px;
+    align-items:flex-end;
+    flex-wrap:wrap;
   }
-  .date-card{
-    min-height: auto; /* 높이 강제값 완화로 스크롤 부담 줄임 */
+
+  .field {
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    min-width:180px;
+    flex:1;
   }
-  .times{
-    grid-template-columns: 1fr;  /* 시간 옵션 한 줄씩 */
+
+  .field label {
+    font-size:13px;
+    color:var(--muted);
   }
-}
 
+  .field input,
+  .field select {
+    width:100%;
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background:#E6F1F7;
+    font-size:14px;
+  }
 
-/* 선택 가능/불가 카드 모두 동일 폭 보장 */
-.cal-grid > .date-card{
-  width:100%;
-}
+  .weekday {
+    font-weight:700;
+    color:var(--muted);
+    text-align:center;
+    margin-bottom:8px;
+  }
 
+  .date-card {
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:12px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    min-height:180px;
+  }
 
-    h1{font-size:22px;margin:0 0 6px}
-    p{margin:0 0 10px;color:var(--muted)}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+  .date-head {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
 
-    /* 상단 기본정보 섹션 – 가로 한 덩이 */
-    .info-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
-    .field{display:flex;flex-direction:column;gap:6px;min-width:180px;flex:1}
-    .field label{font-size:13px;color:var(--muted)}
-    .field input,.field select{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#E6F1F7;font-size:14px}
+  .date-head h3 {
+    font-size:15px;
+    margin:0;
+  }
 
-    /* 캘린더 5열(월~금) */
-    .calendar{margin-top:16px}
-    .cal-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
-    .weekday{font-weight:700;color:var(--muted);text-align:center;margin-bottom:8px}
-    .date-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:180px}
-    .date-head{display:flex;align-items:center;justify-content:space-between}
-    .date-head h3{font-size:15px;margin:0}
-    .badge{font-size:11px;color:#fff;background:var(--brand);padding:3px 8px;border-radius:999px}
-    .disabled{opacity:.55}
-    .disabled .badge{background:#cbd5e1}
-    .times{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-    .time{display:flex;align-items:center;gap:8px;font-size:14px;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:#fafcff}
+  .badge {
+    font-size:11px;
+    color:#fff;
+    background:var(--brand);
+    padding:3px 8px;
+    border-radius:999px;
+  }
 
-    /* 제출 버튼 – 하단 고정 느낌 */
-    .submit-wrap{max-width:1080px;margin:18px auto 28px;display:flex;justify-content:center}
-    .submit-btn{appearance:none;border:none;background:var(--brand);color:#fff;padding:14px 24px;border-radius:14px;cursor:pointer;font-weight:700;font-size:16px;box-shadow:0 6px 20px rgba(14,165,233,.25)}
-    .submit-btn:disabled{opacity:.6;cursor:not-allowed}
+  .disabled {
+    opacity:.55;
+  }
 
-    .center{display:flex;align-items:center;justify-content:center;text-align:center}
-    .thanks{font-size:20px;font-weight:800;margin-top:80px}
-  </style>
+  .disabled .badge {
+    background:#cbd5e1;
+  }
+
+  .times {
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:8px;
+  }
+
+  .time {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:14px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:8px 10px;
+    background:#fafcff;
+  }
+
+  /* 제출 버튼 – 하단 고정 느낌 */
+  .submit-wrap {
+    max-width:1080px;
+    margin:18px auto 28px;
+    display:flex;
+    justify-content:center;
+  }
+
+  .submit-btn {
+    appearance:none;
+    border:none;
+    background:var(--brand);
+    color:#fff;
+    padding:14px 24px;
+    border-radius:14px;
+    cursor:pointer;
+    font-weight:700;
+    font-size:16px;
+    box-shadow:0 6px 20px rgba(14,165,233,.25);
+  }
+
+  .submit-btn:disabled {
+    opacity:.6;
+    cursor:not-allowed;
+  }
+
+  .center {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+  }
+
+  .thanks {
+    font-size:20px;
+    font-weight:800;
+    margin-top:80px;
+  }
+
+  /* --- 반응형: 태블릿(<=1024px)에서는 2열 --- */
+  @media (max-width: 1024px) {
+    .cal-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap:14px;
+    }
+    .times {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* --- 반응형: 모바일(<=640px)에서는 1열 --- */
+  @media (max-width: 640px) {
+    .cal-grid {
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+    .date-card {
+      min-height:auto;
+    }
+    .times {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
 </head>
 <body>
   <header>
